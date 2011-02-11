@@ -23,6 +23,7 @@
 //  THE SOFTWARE.
 
 #import <Foundation/Foundation.h>
+#import "UIColor+HexColor.h"
 
 
 @interface UIBadgeView : UIView {
@@ -30,15 +31,17 @@
 	NSString *badgeString;
 	
 	UIFont *font;
-	UITableViewCell *parent;
+	UIView *parent;
 	
 	UIColor *badgeColor;
-	UIColor *badgeColorHighlighted;		
+	UIColor *badgeColorHighlighted;
+    
+    BOOL badgeVisible;
 }
 
 @property (nonatomic, readonly) NSUInteger width;
 @property (nonatomic, retain) NSString *badgeString;
-@property (nonatomic, assign) UITableViewCell *parent;
+@property (nonatomic, assign) UIView *parent;
 @property (nonatomic, assign) BOOL shadowEnabled;
 @property (nonatomic, retain) UIColor *badgeColor;
 @property (nonatomic, retain) UIColor *badgeColorHighlighted;

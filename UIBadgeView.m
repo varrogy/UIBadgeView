@@ -46,20 +46,30 @@
 		font = [[UIFont boldSystemFontOfSize: 14] retain];
 		
 		self.backgroundColor = [UIColor clearColor];
+        badgeVisible = NO; // initial state is hidden, because there is no badgeString set
 	}
 	
 	return self;	
 }
 
-- (void) setBadgeString:(NSString *)value{
+- (void) setBadgeString:(NSString *)value
+{
 	[badgeString release];
 	
 	badgeString = [value retain];
 	
+    // Badge will not appear when it has no valid content
+    if ((badgeString==nil) || ([badgeString isEqualToString:@""])) {
+        badgeVisible = NO;
+    } else {
+        badgeVisible = YES;
+    }
+    
 	[self setNeedsDisplay];
 }
 
-- (void) setShadowEnabled:(BOOL)value{
+- (void) setShadowEnabled:(BOOL)value 
+{
 	shadowEnabled = value;
 	
 	[self setNeedsDisplay];
@@ -70,47 +80,65 @@
 	NSString *countString = badgeString;
 	
 	CGSize numberSize = [countString sizeWithFont: font];
-	
+    
 	self.width = numberSize.width + 16;
 	
-	CGRect bounds = CGRectMake(0 , 0, numberSize.width + 13 , 21);
+	CGRect bounds = CGRectMake(0, 0, numberSize.width + 13, 21);
 	
 	CGContextRef context = UIGraphicsGetCurrentContext();
 	
-	UIColor *col;
-	if (parent.highlighted || parent.selected) {
-		if (self.badgeColorHighlighted) {
-			col = self.badgeColorHighlighted;
-		} else {
-			col = [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:1.000];
-		}
-	} else {
-		if (self.badgeColor) {
-			col = self.badgeColor;
-		} else {
-			col = HEXCOLOR(0xf61f29ff);
-			//col = HEXCOLOR(0xff0000ff);
-		}
-	}
+    if (!badgeVisible) {
+        CGContextSaveGState(context);
+		CGContextClearRect(context, bounds);
+        CGContextSetFillColorWithColor(context, [UIColor hexColor:0x000000ff].CGColor);
+        CGContextRestoreGState(context);
+        return;
+    }
+    
+    UIColor *col;
 	
+    // Check the parent
+    if ([parent isKindOfClass:[UITableViewCell class]]) {
+        UITableViewCell *tmpCell = (UITableViewCell *)parent;
+        if (tmpCell.highlighted || tmpCell.selected) {
+            if (self.badgeColorHighlighted) {
+                col = self.badgeColorHighlighted;
+            } else {
+                col = [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:1.000];
+            }
+        } else {
+            if (self.badgeColor) {
+                col = self.badgeColor;
+            } else {
+                col = [UIColor hexColor:0xf61f29ff];
+            }
+        }
+	} else {
+        if (self.badgeColor) {
+            col = self.badgeColor;
+        } else {
+            col = [UIColor hexColor:0xff0000ff];
+        }  
+    }
+    
 	if (shadowEnabled) {
 		// draw shadow first
 		CGContextSaveGState(context);
 		CGContextClearRect(context, bounds);
-	
-		CGContextSetShadowWithColor(context, CGSizeMake(0, 3), 2, [HEXCOLOR(0x000000ff) CGColor]);
-	
-		CGContextSetFillColorWithColor(context, [HEXCOLOR(0xffffffff) CGColor]);
-	
+        
+		CGContextSetShadowWithColor(context, CGSizeMake(0, 3), 2, [UIColor hexColor:0x000000ff].CGColor);
+        
+		CGContextSetFillColorWithColor(context, [UIColor hexColor:0xffffffff].CGColor);
+        
 		CGRect shadowRect = CGRectMake(bounds.origin.x + 2, 
 									   bounds.origin.y + 1, 
 									   bounds.size.width - 4, 
 									   bounds.size.height - 3);
-	
+        
 		[self drawRoundedRect:shadowRect inContext:context withRadius:8];
-	
+        
 		CGContextDrawPath(context, kCGPathFill);
-	
+        
 		CGContextRestoreGState(context);
 	}
 	
@@ -124,9 +152,9 @@
 	
 	
 	
-	CGContextSetStrokeColorWithColor(context, [HEXCOLOR(0xffffffff) CGColor]);
+	CGContextSetStrokeColorWithColor(context, [UIColor hexColor:0xffffffff].CGColor);
 	CGContextSetFillColorWithColor(context, [col CGColor]);
-		
+    
 	// Draw background
 	
 	CGFloat backOffset = 2;
@@ -136,22 +164,22 @@
 								 bounds.size.height - backOffset*2);
 	
 	[self drawRoundedRect:backRect inContext:context withRadius:8];
-
+    
 	CGContextDrawPath(context, kCGPathFillStroke);
 	/*
-	// Clip Context
-	CGRect clipRect = CGRectMake(backRect.origin.x + backOffset-1, 
-								 backRect.origin.y + backOffset-1, 
-								 backRect.size.width - (backOffset-1)*2, 
-								 backRect.size.height - (backOffset-1)*2);
-	
-	[self drawRoundedRect:clipRect inContext:context withRadius:8];
-	CGContextClip (context);
-	
-	CGContextSetBlendMode(context, kCGBlendModeClear);*/
-
+     // Clip Context
+     CGRect clipRect = CGRectMake(backRect.origin.x + backOffset-1, 
+     backRect.origin.y + backOffset-1, 
+     backRect.size.width - (backOffset-1)*2, 
+     backRect.size.height - (backOffset-1)*2);
+     
+     [self drawRoundedRect:clipRect inContext:context withRadius:8];
+     CGContextClip (context);
+     
+     CGContextSetBlendMode(context, kCGBlendModeClear);*/
+    
 	CGContextRestoreGState(context);
-
+    
 	
 	CGRect ovalRect = CGRectMake(2, 1, bounds.size.width-4, 
 								 bounds.size.height /2);
@@ -159,19 +187,19 @@
 	bounds.origin.x = (bounds.size.width - numberSize.width) / 2 + 0.5;
 	bounds.origin.y++;
 	
-	CGContextSetFillColorWithColor(context, [HEXCOLOR(0xffffffff)  CGColor]);
+	CGContextSetFillColorWithColor(context, [UIColor hexColor:0xffffffff].CGColor);
 	
 	[countString drawInRect:bounds withFont:self.font];
 	
 	CGContextSaveGState(context);
-
+    
 	
 	//Draw highlight
 	CGGradientRef glossGradient;
 	CGColorSpaceRef rgbColorspace;
 	size_t num_locations = 9;
 	CGFloat locations[9] = { 0.0, 0.10, 0.25, 0.40, 0.45, 0.50, 0.65, 0.75, 1.00 };
-//	CGFloat components[8] = { 1.0, 1.0, 1.0, 0.40, 1.0, 1.0, 1.0, 0.06 };
+    //	CGFloat components[8] = { 1.0, 1.0, 1.0, 0.40, 1.0, 1.0, 1.0, 0.06 };
 	CGFloat components[36] = { 
 		1.0, 1.0, 1.0, 1.00,
 		1.0, 1.0, 1.0, 0.55,
@@ -191,7 +219,7 @@
 	CGPoint end = CGPointMake(bounds.origin.x, bounds.size.height*2);
 	
 	CGContextSetAlpha(context, 1.0); 
-
+    
 	//[self drawRoundedRect:ovalRect inContext:context withRadius:4];
 	
 	CGContextBeginPath (context);
@@ -208,21 +236,21 @@
 	CGContextAddArcToPoint(context, maxx, maxy, midx, maxy, 4);
 	CGContextAddArcToPoint(context, minx, maxy, minx, midy, 4);
 	CGContextClosePath(context);
-
+    
 	CGContextClip (context);
 	
-//	CGContextDrawLinearGradient(context, glossGradient, start, end, 0);
+    //	CGContextDrawLinearGradient(context, glossGradient, start, end, 0);
 	CGContextDrawLinearGradient(context, glossGradient, start, end, 0);
 	
 	CGGradientRelease(glossGradient);
 	CGColorSpaceRelease(rgbColorspace); 
-
-	CGContextSetFillColorWithColor(context, [HEXCOLOR(0x000000ff) CGColor]);
+    
+	CGContextSetFillColorWithColor(context, [UIColor hexColor:0x000000ff].CGColor);
 	
 	
 	CGContextRestoreGState(context);
 	
-
+    
 }
 
 
